@@ -1,0 +1,21 @@
+backend:
+  name: github
+  repo: puskesmasjambesari/puskesmasjambesari.github.io
+  branch: main
+  base_url: https://github.com
+  auth_endpoint: api/v1/authorize
+
+media_folder: "static/img"
+public_folder: "/img"
+
+collections:
+  - name: "posts"
+    label: "Artikel"
+    folder: "content/posts"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - {label: "Judul", name: "title", widget: "string"}
+      - {label: "Tanggal", name: "date", widget: "datetime"}
+      - {label: "Deskripsi SEO", name: "description", widget: "string"}
+      - {label: "Konten Utama", name: "body", widget: "markdown"}
