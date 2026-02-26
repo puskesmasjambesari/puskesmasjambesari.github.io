@@ -2,15 +2,17 @@ backend:
   name: github
   repo: puskesmasjambesari/puskesmasjambesari
   branch: main
-media_folder: "static/uploads"
-public_folder: "/uploads"
+media_folder: "static/img"
+public_folder: "/img"
 collections:
   - name: "posts"
-    label: "Artikel"
+    label: "Daftar Artikel"
     folder: "content/posts"
     create: true
+    slug: "{{slug}}"
     fields:
-      - {label: "Judul", name: "title", widget: "string"}
+      - {label: "Judul Artikel", name: "title", widget: "string"}
+      - {label: "Deskripsi SEO", name: "description", widget: "string"}
       - {label: "Tanggal", name: "date", widget: "datetime"}
-      - {label: "Isi Konten", name: "body", widget: "markdown"}
-
+      - {label: "Gambar Sampul", name: "image", widget: "image", required: false}
+      - {label: "Konten Artikel", name: "body", widget: "markdown"}
