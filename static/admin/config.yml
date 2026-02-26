@@ -1,6 +1,7 @@
+site_url: https://puskesmasjambesari.github.io
 backend:
   name: github
-  repo: puskesmasjambesari/puskesmasjambesari
+  repo: puskesmasjambesari/puskesmasjambesari.github.io
   branch: main
 media_folder: "static/img"
 public_folder: "/img"
