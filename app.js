@@ -1,5 +1,5 @@
 // GANTI DENGAN URL WORKER ANDA
-const WORKER_URL = "https://gemini-proxy.username.workers.dev"; 
+const WORKER_URL = "https://gemini-proxy.sip-puskesmas-jambesari.workers.dev"; 
 
 // GANTI DENGAN URL RAW FILE REGULASI DI GITHUB ANDA 
 // (Bisa dikosongkan/di-comment sementara jika file belum ada di github)
