@@ -317,6 +317,85 @@
                 </div>
             </div>
         </div>
+
+        <!-- ==============================================
+             MODAL STEP 9: PERENCANAAN ANGGARAN
+             ============================================== -->
+        <div class="modal fade" id="modalStep9" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">Step 9: Perencanaan Anggaran Kegiatan</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <strong>Instruksi:</strong> Isi detail anggaran untuk setiap rencana aksi. Jika terintegrasi dengan kegiatan lain atau tidak butuh dana, isi jumlah dengan "0" atau strip (-).
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="25%">Rencana Kegiatan (What)</th>
+                                        <th width="15%">Tahun Anggaran</th>
+                                        <th width="20%">Jumlah (Rp)</th>
+                                        <th width="20%">Sumber Dana (BOK/BLUD/dll)</th>
+                                        <th width="20%">Catatan</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyStep9">
+                                    <!-- Diisi otomatis oleh JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="submitStep9()">Simpan Anggaran & Buat Tabel Monev (Step 10)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==============================================
+             MODAL STEP 10: RENCANA MONITORING & EVALUASI
+             ============================================== -->
+        <div class="modal fade" id="modalStep10" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-fullscreen">
+                <div class="modal-content">
+                    <div class="modal-header bg-secondary text-white">
+                        <h5 class="modal-title">Step 10: Rencana Monitoring & Evaluasi (Monev)</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-warning">
+                            <strong>Instruksi:</strong> AI telah menyusun Kriteria Target Keberhasilan. Review hasil AI. Jika tidak setuju, isi rekomendasi Anda agar AI melakukan perbaikan kriteria. Kolom "Hasil Monev" dikosongkan untuk diisi manual/cetak nanti.
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm align-middle">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th width="15%">Kegiatan (What)</th>
+                                        <th width="10%">Kapan & Dimana</th>
+                                        <th width="10%">Oleh Siapa</th>
+                                        <th width="20%">Kriteria Target / Indikator Keberhasilan (Dari AI)</th>
+                                        <th width="15%">Hasil Monev (Kosong)</th>
+                                        <th width="10%">Terima Target AI?</th>
+                                        <th width="20%">Rekomendasi Revisi Target</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyStep10">
+                                    <!-- Diisi oleh JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-warning" onclick="revisiMonevAI()">Re-Analisis Target (Berdasarkan Rekomendasi)</button>
+                        <button type="button" class="btn btn-success" onclick="submitStep10()">Finalisasi PDCA & Buat Laporan (Lanjut Step 11)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         
     </div>
 
