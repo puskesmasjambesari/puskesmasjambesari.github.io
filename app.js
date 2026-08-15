@@ -522,6 +522,7 @@ function prosesKeputusanNGT() {
         appState.akarPrioritasFinal = appState.akarTerpilih;
         alert("Lanjut ke Step 7: Alternatif Solusi (Tanpa NGT).");
         // panggil fungsi mulaiStep7() disini nanti
+        mulaiStep7()
     } else {
         appState.configNGT = {
             voter: parseInt(document.getElementById('jumlahVoter').value),
@@ -608,10 +609,448 @@ Keluaran HARUS JSON: { "kesimpulan_ngt": "Teks narasi..." }`;
         bootstrap.Modal.getInstance(document.getElementById('modalStep6C')).hide();
         alert("Voting Selesai!\n" + appState.narasiNGT + "\n\nLanjut ke Step 7: Alternatif Solusi.");
         // panggil fungsi mulaiStep7() disini nanti
+        mulaiStep7()
 
     } catch (error) {
         alert("Gagal memproses AI narasi NGT, namun kalkulasi berhasil.");
     } finally {
         showLoading(false);
     }
+}
+
+// ==========================================
+// STEP 7: ANALISIS ALTERNATIF SOLUSI
+// ==========================================
+async function mulaiStep7() {
+    showLoading(true);
+
+    const akarData = JSON.stringify(appState.akarPrioritasFinal.map(a => ({ id: a.id_akar, akar_penyebab: a.why_5, kategori: a.kategori_fishbone })));
+
+    const promptSystem = `Anda adalah Spesialis Inovasi dan Manajemen Mutu Kesehatan Publik (Puskesmas).
+Berdasarkan akar masalah (Why-5) yang ada, rumuskan 2 hingga 5 alternatif solusi konkret, realistis, dan sesuai standar regulasi Kemenkes terbaru.
+Keluaran HARUS JSON MURNI:
+{
+  "alternatif_solusi": [
+    {
+      "id_solusi": "sol_1",
+      "id_akar": "id_akar_terkait",
+      "akar_penyebab": "Teks akar penyebab...",
+      "judul_solusi": "Nama Inovasi / Solusi",
+      "deskripsi_solusi": "Rincian singkat solusi...",
+      "kategori_kegiatan": "Manajemen / Pelatihan / Sarpras / Pelayanan"
+    }
+  ]
+}`;
+
+    try {
+        const response = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ role: "user", parts: [{ text: promptSystem + "\n\nData Akar Masalah:\n" + akarData }] }],
+                generationConfig: { responseMimeType: "application/json", temperature: 0.3 }
+            })
+        });
+
+        const data = await response.json();
+        const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+        
+        appState.alternatifSolusiMentah = parsed.alternatif_solusi;
+
+        renderStep7();
+
+        const modalStep7 = new bootstrap.Modal(document.getElementById('modalStep7'));
+        modalStep7.show();
+        appState.step = 7;
+
+    } catch (error) {
+        alert("Gagal merumuskan alternatif solusi: " + error.message);
+    } finally {
+        showLoading(false);
+    }
+}
+
+function renderStep7() {
+    let html = '';
+    
+    // Kelompokkan solusi berdasarkan Akar Penyebab
+    appState.akarPrioritasFinal.forEach(akar => {
+        const solusiTerkait = appState.alternatifSolusiMentah.filter(s => s.akar_penyebab === akar.why_5 || s.id_akar === akar.id_akar);
+
+        html += `<div class="card mb-3 border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <strong>Akar Penyebab:</strong> ${akar.why_5} <span class="badge bg-light text-dark ms-2">${akar.kategori_fishbone}</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="5%" class="text-center">Pilih</th>
+                                    <th width="25%">Nama Solusi / Inovasi</th>
+                                    <th>Deskripsi Pelaksanaan Solusi</th>
+                                    <th width="15%">Kategori</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+        solusiTerkait.forEach(sol => {
+            html += `
+                <tr>
+                    <td class="text-center align-middle">
+                        <input type="checkbox" class="form-check-input chk-solusi" style="transform: scale(1.4);" value="${sol.id_solusi}">
+                    </td>
+                    <td class="fw-bold align-middle">${sol.judul_solusi}</td>
+                    <td class="align-middle">${sol.deskripsi_solusi}</td>
+                    <td class="align-middle"><span class="badge bg-info text-dark">${sol.kategori_kegiatan}</span></td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table></div></div>`;
+    });
+
+    document.getElementById('containerStep7').innerHTML = html;
+}
+
+function submitStep7() {
+    const checked = document.querySelectorAll('.chk-solusi:checked');
+    if (checked.length === 0) {
+        alert("Pilih minimal 1 solusi yang akan dilaksanakan!");
+        return;
+    }
+
+    appState.solusiTerpilih = Array.from(checked).map(cb => {
+        return appState.alternatifSolusiMentah.find(s => s.id_solusi === cb.value);
+    });
+
+    bootstrap.Modal.getInstance(document.getElementById('modalStep7')).hide();
+    
+    // Langsung jalankan penyusunan Planning (Step 8)
+    mulaiStep8();
+}
+
+// ==========================================
+// STEP 8: PLANNING 4W + 1H & USER RECOMENDATION
+// ==========================================
+async function mulaiStep8() {
+    showLoading(true);
+
+    const solusiData = JSON.stringify(appState.solusiTerpilih);
+
+    const promptSystem = `Anda adalah Perencana Mutu Operasional Puskesmas.
+Berdasarkan solusi terpilih berikut, susun Rencana Pelaksanaan Kegiatan dengan format 4W + 1H (What, Why, Where, When, Who, How). Setiap solusi dapat diturunkan menjadi 1 hingga 3 rencana aksi konkret.
+Keluaran HARUS JSON MURNI:
+{
+  "planning": [
+    {
+      "id_plan": "plan_1",
+      "id_solusi": "id_solusi_terkait",
+      "what": "Nama kegiatan spesifik...",
+      "why": "Tujuan dan manfaat kegiatan...",
+      "where": "Lokasi pelaksanaan (misal: Ruang Pendaftaran / Posyandu)",
+      "when": "Estimasi waktu/durasi (misal: Minggu ke-2 Bulan Maret 2026)",
+      "who": "Penanggung Jawab (misal: Penanggung Jawab Mutu / PJ UKP)",
+      "how": "Langkah-langkah teknis pelaksanaan..."
+    }
+  ]
+}`;
+
+    try {
+        const response = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ role: "user", parts: [{ text: promptSystem + "\n\nSolusi Terpilih:\n" + solusiData }] }],
+                generationConfig: { responseMimeType: "application/json", temperature: 0.2 }
+            })
+        });
+
+        const data = await response.json();
+        const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+        
+        appState.planningMentah = parsed.planning;
+
+        renderStep8();
+
+        const modalStep8 = new bootstrap.Modal(document.getElementById('modalStep8'));
+        modalStep8.show();
+        appState.step = 8;
+
+    } catch (error) {
+        alert("Gagal menyusun 4W1H: " + error.message);
+    } finally {
+        showLoading(false);
+    }
+}
+
+function renderStep8() {
+    let html = '';
+    
+    appState.planningMentah.forEach((plan, idx) => {
+        html += `
+            <tr>
+                <td class="text-center">
+                    <input type="checkbox" class="form-check-input chk-plan" style="transform: scale(1.3);" value="${plan.id_plan}" checked>
+                </td>
+                <td><strong>${plan.what}</strong></td>
+                <td><small>${plan.why}</small></td>
+                <td><input type="text" class="form-control form-control-sm input-where" data-id="${plan.id_plan}" value="${plan.where}"></td>
+                <td><input type="text" class="form-control form-control-sm input-when" data-id="${plan.id_plan}" value="${plan.when}"></td>
+                <td><input type="text" class="form-control form-control-sm input-who" data-id="${plan.id_plan}" value="${plan.who}"></td>
+                <td><small>${plan.how}</small></td>
+                <td>
+                    <textarea class="form-control form-control-sm input-rekomendasi" data-id="${plan.id_plan}" rows="2" placeholder="Catatan/Rekomendasi user..."></textarea>
+                </td>
+            </tr>
+        `;
+    });
+
+    document.getElementById('tbodyStep8').innerHTML = html;
+}
+
+async function submitRevisiStep8() {
+    const checked = document.querySelectorAll('.chk-plan:checked');
+    if (checked.length === 0) {
+        alert("Pilih minimal 1 rencana aksi!");
+        return;
+    }
+
+    // Capture perubahan dari input user (When, Who, Where, & Rekomendasi)
+    const planningDitinjau = Array.from(checked).map(cb => {
+        const id = cb.value;
+        const asal = appState.planningMentah.find(p => p.id_plan === id);
+        
+        return {
+            ...asal,
+            where: document.querySelector(`.input-where[data-id="${id}"]`).value,
+            when: document.querySelector(`.input-when[data-id="${id}"]`).value,
+            who: document.querySelector(`.input-who[data-id="${id}"]`).value,
+            rekomendasi_user: document.querySelector(`.input-rekomendasi[data-id="${id}"]`).value
+        };
+    });
+
+    // Cek apakah ada rekomendasi dari user yang memerlukan revisi AI
+    const adaRekomendasiUser = planningDitinjau.some(p => p.rekomendasi_user && p.rekomendasi_user.trim() !== "");
+
+    if (adaRekomendasiUser) {
+        showLoading(true);
+        // Minta AI melakukan revisi narasi berdasarkan rekomendasi user
+        const promptSystem = `Anda adalah Konsultan Mutu Puskesmas.
+User telah memberikan penyesuaian/rekomendasi pada beberapa poin rencana aksi (4W1H). 
+Tugas Anda adalah memperbarui kolom 'how' (cara pelaksanaan) dan 'why' (alasan) agar selaras dengan rekomendasi dari user tersebut.
+Keluaran HARUS JSON MURNI dengan struktur array sama seperti input:
+{
+  "planning_revisi": [
+    {
+      "id_plan": "plan_1",
+      "what": "...", "why": "...", "where": "...", "when": "...", "who": "...", "how": "Hasil revisi mengintegrasikan rekomendasi user...", "catatan_revisi_ai": "Integrasi rekomendasi berhasil"
+    }
+  ]
+}`;
+
+        try {
+            const response = await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ role: "user", parts: [{ text: promptSystem + "\n\nData Perencanaan + Rekomendasi User:\n" + JSON.stringify(planningDitinjau) }] }],
+                    generationConfig: { responseMimeType: "application/json", temperature: 0.2 }
+                })
+            });
+
+            const data = await response.json();
+            const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+            appState.planningFinal = parsed.planning_revisi;
+
+        } catch (e) {
+            console.error(e);
+            appState.planningFinal = planningDitinjau; // Fallback jika API gagal
+        } finally {
+            showLoading(false);
+        }
+    } else {
+        appState.planningFinal = planningDitinjau;
+    }
+
+    bootstrap.Modal.getInstance(document.getElementById('modalStep8')).hide();
+    alert("Rencana Aksi (4W1H) Berhasil Disusun & Direvisi!\nLanjut ke Step 9: Penganggaran & Perencanaan Anggaran.");
+    // Nanti memanggil fungsi mulaiStep9() di sini
+    mulaiStep9()
+}
+
+// ==========================================
+// STEP 9: PENYUSUNAN ANGGARAN
+// ==========================================
+// (Panggil fungsi ini di dalam submitRevisiStep8() setelah alert "Berhasil!")
+function mulaiStep9() {
+    let html = '';
+    
+    appState.planningFinal.forEach(plan => {
+        html += `
+            <tr>
+                <td><strong>${plan.what}</strong></td>
+                <td><input type="text" class="form-control bg-tahun" data-id="${plan.id_plan}" placeholder="Misal: 2026"></td>
+                <td><input type="text" class="form-control bg-jumlah" data-id="${plan.id_plan}" placeholder="Rp 0"></td>
+                <td><input type="text" class="form-control bg-sumber" data-id="${plan.id_plan}" placeholder="BOK/JKN/BLUD/-"></td>
+                <td><input type="text" class="form-control bg-catatan" data-id="${plan.id_plan}" placeholder="Integrasi UKM..."></td>
+            </tr>
+        `;
+    });
+
+    document.getElementById('tbodyStep9').innerHTML = html;
+    
+    const modalStep9 = new bootstrap.Modal(document.getElementById('modalStep9'));
+    modalStep9.show();
+    appState.step = 9;
+}
+
+function submitStep9() {
+    // Simpan input anggaran ke dalam state
+    appState.planningFinal = appState.planningFinal.map(plan => {
+        return {
+            ...plan,
+            anggaran: {
+                tahun: document.querySelector(`.bg-tahun[data-id="${plan.id_plan}"]`).value,
+                jumlah: document.querySelector(`.bg-jumlah[data-id="${plan.id_plan}"]`).value,
+                sumber: document.querySelector(`.bg-sumber[data-id="${plan.id_plan}"]`).value,
+                catatan: document.querySelector(`.bg-catatan[data-id="${plan.id_plan}"]`).value
+            }
+        };
+    });
+
+    bootstrap.Modal.getInstance(document.getElementById('modalStep9')).hide();
+    
+    // Lanjut ke AI untuk merumuskan target Monev
+    mulaiStep10();
+}
+
+// ==========================================
+// STEP 10: AI MONEV (MONITORING & EVALUASI)
+// ==========================================
+async function mulaiStep10(isRevisi = false) {
+    showLoading(true);
+
+    let dataUntukAI = appState.planningFinal;
+    
+    let promptSystem = `Anda adalah Auditor Mutu Internal Puskesmas.
+Tugas Anda adalah membuat 'Kriteria Target' (Indikator Keberhasilan yang SMART) untuk keperluan Monitoring dan Evaluasi dari setiap rencana kegiatan (What).
+Keluaran HARUS JSON MURNI:
+{
+  "monev": [
+    {
+      "id_plan": "plan_1",
+      "kriteria_target": "Deskripsi target kuantitatif dan kualitatif yang harus dicapai..."
+    }
+  ]
+}`;
+
+    if (isRevisi) {
+        promptSystem = `Anda adalah Auditor Mutu Internal Puskesmas. User menolak kriteria target sebelumnya dan memberikan rekomendasi. Revisi 'Kriteria Target' agar sesuai dengan rekomendasi user. Keluaran HARUS JSON MURNI format sama.`;
+    }
+
+    try {
+        const response = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ role: "user", parts: [{ text: promptSystem + "\n\nData Perencanaan:\n" + JSON.stringify(dataUntukAI) }] }],
+                generationConfig: { responseMimeType: "application/json", temperature: 0.2 }
+            })
+        });
+
+        const data = await response.json();
+        const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+        
+        // Gabungkan target dari AI ke state kita
+        appState.planningFinal = appState.planningFinal.map(plan => {
+            const monevData = parsed.monev.find(m => m.id_plan === plan.id_plan);
+            return {
+                ...plan,
+                kriteria_target: monevData ? monevData.kriteria_target : plan.kriteria_target
+            };
+        });
+
+        renderStep10();
+
+        if (!isRevisi) {
+            const modalStep10 = new bootstrap.Modal(document.getElementById('modalStep10'));
+            modalStep10.show();
+            appState.step = 10;
+        }
+
+    } catch (error) {
+        alert("Gagal merumuskan target Monev: " + error.message);
+    } finally {
+        showLoading(false);
+    }
+}
+
+function renderStep10() {
+    let html = '';
+    
+    appState.planningFinal.forEach(plan => {
+        html += `
+            <tr>
+                <td><strong>${plan.what}</strong></td>
+                <td><small>${plan.when} <br> ${plan.where}</small></td>
+                <td>${plan.who}</td>
+                <td><p class="mb-0 fw-bold text-primary">${plan.kriteria_target}</p></td>
+                <td class="bg-light"><em>(Akan diisi saat Monev)</em></td>
+                <td class="text-center align-middle">
+                    <select class="form-select form-select-sm acc-target" data-id="${plan.id_plan}">
+                        <option value="terima">Terima Target</option>
+                        <option value="tolak">Tolak & Revisi</option>
+                    </select>
+                </td>
+                <td>
+                    <textarea class="form-control form-control-sm rekom-target" data-id="${plan.id_plan}" rows="2" placeholder="Jika tolak, isi instruksi revisi untuk AI di sini...">${plan.rekomendasi_monev || ''}</textarea>
+                </td>
+            </tr>
+        `;
+    });
+
+    document.getElementById('tbodyStep10').innerHTML = html;
+}
+
+function revisiMonevAI() {
+    let butuhRevisi = false;
+
+    // Simpan rekomendasi user ke state sebelum melempar ke AI
+    appState.planningFinal = appState.planningFinal.map(plan => {
+        const status = document.querySelector(`.acc-target[data-id="${plan.id_plan}"]`).value;
+        const rekom = document.querySelector(`.rekom-target[data-id="${plan.id_plan}"]`).value;
+        
+        if (status === 'tolak') {
+            butuhRevisi = true;
+        }
+        
+        return {
+            ...plan,
+            status_target: status,
+            rekomendasi_monev: rekom
+        };
+    });
+
+    if (butuhRevisi) {
+        mulaiStep10(true); // Panggil ulang dengan flag true (mode revisi)
+    } else {
+        alert("Tidak ada target yang ditolak, tidak perlu re-analisis.");
+    }
+}
+
+function submitStep10() {
+    // Pengecekan akhir
+    const adaYangDitolak = appState.planningFinal.some(plan => {
+        return document.querySelector(`.acc-target[data-id="${plan.id_plan}"]`).value === 'tolak';
+    });
+
+    if (adaYangDitolak) {
+        alert("Masih ada Kriteria Target yang Anda tolak. Silakan klik 'Re-Analisis Target' terlebih dahulu atau ubah statusnya menjadi Terima.");
+        return;
+    }
+
+    bootstrap.Modal.getInstance(document.getElementById('modalStep10')).hide();
+    alert("Proses Analisis Masalah hingga Monev Selesai! Saatnya AI merangkum semuanya menjadi Dokumen Laporan Resmi.");
+    
+    // Nanti akan memanggil fungsi eksporLaporan(Step 11 & 12)
 }
