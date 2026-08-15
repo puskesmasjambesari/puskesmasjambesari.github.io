@@ -396,6 +396,46 @@
                 </div>
             </div>
         </div>
+
+        <!-- ==============================================
+             MODAL STEP 11 & 12: PREVIEW LAPORAN & EKSPOR
+             ============================================== -->
+        <div class="modal fade" id="modalStep11" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-fullscreen">
+                <div class="modal-content">
+                    <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title">Step 11 & 12: Finalisasi Laporan PDCA/PDSA</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body bg-light">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card shadow-sm mb-3">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold">Status Draft AI</h6>
+                                        <p class="small text-muted">AI telah menyusun narasi laporan berdasarkan seluruh langkah analisis sebelumnya.</p>
+                                        <label>Revisi Narasi (Jika Ada):</label>
+                                        <textarea id="inputRevisiLaporan" class="form-control form-control-sm mb-2" rows="4" placeholder="Misal: Tambahkan poin keselamatan pasien di kesimpulan..."></textarea>
+                                        <button class="btn btn-warning btn-sm w-100 mb-3" onclick="mulaiStep11(true)">Minta AI Revisi Narasi</button>
+                                        <hr>
+                                        <button class="btn btn-primary w-100 fw-bold" onclick="eksporKeWord()"><i class="bi bi-file-word"></i> Ekspor ke Word (.doc)</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-9">
+                                <!-- Area Kertas Preview Laporan -->
+                                <div class="card shadow">
+                                    <div class="card-body p-5 bg-white" id="areaLaporan" style="min-height: 800px; color: black; font-family: 'Times New Roman', Times, serif;">
+                                        <!-- Konten Laporan Akan Dirender di Sini -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         
     </div>
 
