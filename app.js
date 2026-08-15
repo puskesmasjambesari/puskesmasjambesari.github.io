@@ -1053,4 +1053,186 @@ function submitStep10() {
     alert("Proses Analisis Masalah hingga Monev Selesai! Saatnya AI merangkum semuanya menjadi Dokumen Laporan Resmi.");
     
     // Nanti akan memanggil fungsi eksporLaporan(Step 11 & 12)
+    mulaiStep11();
+}
+
+// ==========================================
+// STEP 11: PENYUSUNAN NARASI LAPORAN AI
+// ==========================================
+// Panggil fungsi ini di dalam submitStep10()
+async function mulaiStep11(isRevisi = false) {
+    showLoading(true);
+
+    // Kita ekstrak data penting saja agar tidak melebihi batas token prompt
+    const ringkasanData = {
+        data_dasar: appState.dataInput.dasar,
+        kinerja: appState.dataInput.kinerja,
+        masalah_utama: appState.prioritasAkhir.map(m => m.deskripsi),
+        akar_penyebab: appState.akarPrioritasFinal.map(a => a.why_5),
+        solusi: appState.solusiTerpilih.map(s => s.judul_solusi),
+        target_waktu: appState.planningFinal.map(p => p.when)
+    };
+
+    let promptSystem = `Anda adalah Tim Ahli Perumus Laporan Mutu Puskesmas.
+Berdasarkan ringkasan data analisis PDCA/PDSA berikut, buatkan komponen narasi untuk laporan resmi.
+Keluaran HARUS JSON MURNI:
+{
+  "judul_smart": "Judul Laporan yang mengandung unsur SMART (Spesific, Measurable, Achievable, Relevant, Time-bound). Menyebutkan upaya perbaikan dan solusi utamanya beserta target/waktu",
+  "pendahuluan_latar_belakang": "Narasi latar belakang masalah (2-3 paragraf) berdasarkan data dasar dan kinerja.",
+  "pendahuluan_tujuan": "Narasi tujuan (Tujuan Umum dan Tujuan Khusus) perbaikan mutu ini.",
+  "penutup_kesimpulan": "Narasi kesimpulan dari seluruh proses (1-2 paragraf).",
+  "penutup_saran": "Narasi saran tindak lanjut ke depannya."
+}`;
+
+    if (isRevisi) {
+        const rekomendasiUser = document.getElementById('inputRevisiLaporan').value;
+        promptSystem += `\n\nUser meminta REVISI berikut pada narasi laporan: "${rekomendasiUser}". Harap sesuaikan narasi berdasarkan permintaan ini.`;
+    }
+
+    try {
+        const response = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ role: "user", parts: [{ text: promptSystem + "\n\nData Laporan:\n" + JSON.stringify(ringkasanData) }] }],
+                generationConfig: { responseMimeType: "application/json", temperature: 0.3 }
+            })
+        });
+
+        const data = await response.json();
+        const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+        
+        appState.narasiLaporan = parsed;
+
+        renderLaporanFinal();
+
+        if (!isRevisi) {
+            const modalStep11 = new bootstrap.Modal(document.getElementById('modalStep11'));
+            modalStep11.show();
+            appState.step = 11;
+        }
+
+    } catch (error) {
+        alert("Gagal menyusun narasi laporan: " + error.message);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// ==========================================
+// RENDER LAPORAN LENGKAP KE LAYAR (HTML)
+// ==========================================
+function renderLaporanFinal() {
+    const narasi = appState.narasiLaporan;
+    
+    // Fungsi bantuan membuat baris tabel
+    const buatTabelUSG = appState.prioritasAkhir.map((m, i) => 
+        `<tr><td>${i+1}</td><td>${m.deskripsi}</td><td>${m.skor_final.U}</td><td>${m.skor_final.S}</td><td>${m.skor_final.G}</td><td>${m.total_skor}</td></tr>`
+    ).join('');
+
+    const buatTabelPlan = appState.planningFinal.map((p, i) => 
+        `<tr><td>${i+1}</td><td>${p.what}</td><td>${p.why}</td><td>${p.where}</td><td>${p.when}</td><td>${p.who}</td><td>${p.how}</td><td>Tahun: ${p.anggaran.tahun}<br>Rp ${p.anggaran.jumlah}<br>Sumber: ${p.anggaran.sumber}</td></tr>`
+    ).join('');
+
+    const buatTabelMonev = appState.planningFinal.map((p, i) => 
+        `<tr><td>${i+1}</td><td>${p.what}</td><td>${p.when}</td><td>${p.who}</td><td>${p.kriteria_target}</td><td></td></tr>`
+    ).join('');
+
+    const templateLaporan = `
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h3 style="text-transform: uppercase; font-weight: bold;">LAPORAN ANALISIS PENINGKATAN MUTU DAN KESELAMATAN PASIEN</h3>
+            <h4 style="font-weight: bold;">${narasi.judul_smart}</h4>
+        </div>
+
+        <h4 style="font-weight: bold;">BAB I. PENDAHULUAN</h4>
+        <h5 style="font-weight: bold;">A. Latar Belakang</h5>
+        <p style="text-align: justify;">${narasi.pendahuluan_latar_belakang.replace(/\n/g, '<br>')}</p>
+        
+        <h5 style="font-weight: bold;">B. Tujuan</h5>
+        <p style="text-align: justify;">${narasi.pendahuluan_tujuan.replace(/\n/g, '<br>')}</p>
+
+        <h4 style="font-weight: bold; margin-top: 20px;">BAB II. HASIL ANALISIS</h4>
+        <h5 style="font-weight: bold;">A. Identifikasi dan Prioritas Masalah (Metode USG)</h5>
+        <table border="1" cellpadding="5" cellspacing="0" style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+            <thead style="background-color: #f2f2f2;">
+                <tr><th>No</th><th>Masalah</th><th>U</th><th>S</th><th>G</th><th>Total</th></tr>
+            </thead>
+            <tbody>${buatTabelUSG}</tbody>
+        </table>
+
+        <h5 style="font-weight: bold;">B. Analisis Akar Penyebab Masalah (Root Cause Analysis)</h5>
+        <p>Akar penyebab utama yang berhasil diidentifikasi (Why-5) meliputi: 
+            <ul>${appState.akarPrioritasFinal.map(a => `<li>${a.why_5} (${a.kategori_fishbone})</li>`).join('')}</ul>
+        </p>
+        <p><em>(Catatan: Diagram Tulang Ikan dan Metode NGT terlampir di data sistem).</em></p>
+
+        <h4 style="font-weight: bold; margin-top: 20px;">BAB III. RENCANA TINDAK LANJUT (PLANNING)</h4>
+        <h5 style="font-weight: bold;">A. Alternatif Solusi & Perencanaan (4W1H) beserta Anggaran</h5>
+        <table border="1" cellpadding="5" cellspacing="0" style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px;">
+            <thead style="background-color: #f2f2f2;">
+                <tr><th>No</th><th>Kegiatan (What)</th><th>Tujuan (Why)</th><th>Lokasi (Where)</th><th>Waktu (When)</th><th>PJ (Who)</th><th>Metode (How)</th><th>Anggaran</th></tr>
+            </thead>
+            <tbody>${buatTabelPlan}</tbody>
+        </table>
+
+        <h5 style="font-weight: bold;">B. Rencana Monitoring & Evaluasi</h5>
+        <table border="1" cellpadding="5" cellspacing="0" style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px;">
+            <thead style="background-color: #f2f2f2;">
+                <tr><th>No</th><th>Kegiatan</th><th>Waktu</th><th>Pelaksana</th><th>Kriteria Target / Indikator</th><th width="15%">Hasil Monev</th></tr>
+            </thead>
+            <tbody>${buatTabelMonev}</tbody>
+        </table>
+
+        <h4 style="font-weight: bold; margin-top: 20px;">BAB IV. PENUTUP</h4>
+        <h5 style="font-weight: bold;">A. Kesimpulan</h5>
+        <p style="text-align: justify;">${narasi.penutup_kesimpulan.replace(/\n/g, '<br>')}</p>
+        
+        <h5 style="font-weight: bold;">B. Saran</h5>
+        <p style="text-align: justify;">${narasi.penutup_saran.replace(/\n/g, '<br>')}</p>
+    `;
+
+    document.getElementById('areaLaporan').innerHTML = templateLaporan;
+}
+
+// ==========================================
+// STEP 12: EKSPOR KE MICROSOFT WORD
+// ==========================================
+function eksporKeWord() {
+    const areaLaporan = document.getElementById('areaLaporan').innerHTML;
+    
+    // Header rahasia untuk memaksa browser mengenalinya sebagai dokumen Word murni
+    const preHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset='utf-8'><title>Laporan Mutu PDCA</title>
+    <style>
+        body { font-family: 'Times New Roman', serif; font-size: 12pt; }
+        table { border-collapse: collapse; width: 100%; }
+        td, th { border: 1px solid black; padding: 5px; }
+        h3, h4, h5 { font-family: 'Times New Roman', serif; margin-bottom: 5px; }
+    </style>
+    </head><body>`;
+    
+    const postHtml = "</body></html>";
+    
+    const htmlData = preHtml + areaLaporan + postHtml;
+    
+    // Konversi HTML ke format Blob MS Word
+    const blob = new Blob(['\ufeff', htmlData], { type: 'application/msword' });
+    const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(htmlData);
+    
+    const filename = "Laporan_Mutu_PDCA_" + new Date().getTime() + ".doc";
+    
+    // Trigger download
+    const downloadLink = document.createElement("a");
+    document.body.appendChild(downloadLink);
+    
+    if (navigator.msSaveOrOpenBlob) {
+        navigator.msSaveOrOpenBlob(blob, filename); // Fallback untuk IE lama
+    } else {
+        downloadLink.href = url;
+        downloadLink.download = filename;
+        downloadLink.click();
+    }
+    document.body.removeChild(downloadLink);
+    
+    alert("Berhasil mengekspor Laporan! Anda dapat menggunakan fitur 'Unduh JSON State' di menu utama untuk menyimpan rekaman analisis ini agar dapat di-upload kembali saat melakukan evaluasi tindak lanjut di masa depan.");
 }
