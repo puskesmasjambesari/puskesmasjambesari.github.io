@@ -353,3 +353,264 @@ function finalisasiUSG() {
     alert("Berhasil! Masalah prioritas telah ditetapkan. Data siap untuk dianalisis menggunakan Diagram Tulang Ikan (Fishbone).");
     // Nanti akan memanggil fungsi tampilStep6() di sini
 }
+
+// ==========================================
+// STEP 6: ANALISIS FISHBONE & 5 WHY OLEH AI
+// ==========================================
+// Panggil fungsi ini di akhir fungsi finalisasiUSG() (Ganti // Nanti akan memanggil fungsi tampilStep6() di sini)
+async function mulaiStep6() {
+    showLoading(true);
+
+    const dataMasalah = JSON.stringify(appState.prioritasAkhir.map(m => ({ id: m.id, masalah: m.deskripsi })));
+    
+    // Prompt yang sangat kuat untuk memaksa AI melakukan 5-Why
+    const promptSystem = `Anda adalah Ahli Analisis Mutu (Root Cause Analysis). 
+Lakukan analisis Tulang Ikan (Fishbone 5M+1E: Man, Machine, Method, Material, Measurement, Environment) dan 5-Why untuk setiap masalah berikut.
+Untuk setiap masalah, hasilkan 5 hingga 10 rantai penyebab.
+Keluaran HARUS JSON MURNI dengan format array berikut:
+{
+  "analisis_akar": [
+    {
+      "id_masalah": 1,
+      "kategori_fishbone": "Man (Manusia)",
+      "why_1": "Kinerja petugas lambat",
+      "why_2": "Sering kebingungan saat input data",
+      "why_3": "Tidak paham menggunakan aplikasi baru",
+      "why_4": "Belum ada sosialisasi aplikasi",
+      "why_5": "SOP pelatihan tidak berjalan (Ini Akar Penyebabnya)"
+    }
+  ]
+}`;
+
+    const requestBody = {
+        contents: [{ role: "user", parts: [{ text: promptSystem + "\n\nMasalah:\n" + dataMasalah }] }],
+        generationConfig: { responseMimeType: "application/json", temperature: 0.3 }
+    };
+
+    try {
+        const response = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+        });
+
+        const data = await response.json();
+        const parsedData = JSON.parse(data.candidates[0].content.parts[0].text);
+        
+        // Simpan ke state
+        appState.akarPenyebabMentah = parsedData.analisis_akar;
+        
+        // Berikan ID unik untuk setiap akar penyebab
+        appState.akarPenyebabMentah.forEach((akar, idx) => akar.id_akar = "akar_" + idx);
+
+        renderTabel5Why();
+        
+        const modalStep6A = new bootstrap.Modal(document.getElementById('modalStep6A'));
+        modalStep6A.show();
+        appState.step = 6;
+
+    } catch (error) {
+        alert("Gagal melakukan analisis akar penyebab: " + error.message);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// ==========================================
+// RENDER TABEL 5-WHY
+// ==========================================
+function renderTabel5Why() {
+    let html = '';
+    
+    // Kelompokkan berdasarkan masalah
+    appState.prioritasAkhir.forEach(masalah => {
+        const akarTerkait = appState.akarPenyebabMentah.filter(a => a.id_masalah == masalah.id);
+        
+        html += `<h5 class="mt-4 text-primary">Masalah: ${masalah.deskripsi}</h5>`;
+        html += `<div class="table-responsive"><table class="table table-bordered table-hover table-sm">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Kategori (Fishbone)</th>
+                            <th>Why 1</th><th>Why 2</th><th>Why 3</th><th>Why 4</th>
+                            <th class="bg-danger text-white">Why 5 (Akar Utama)</th>
+                            <th>Pilih?</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+        
+        akarTerkait.forEach(akar => {
+            html += `
+                <tr>
+                    <td><strong>${akar.kategori_fishbone}</strong></td>
+                    <td>${akar.why_1}</td>
+                    <td>${akar.why_2}</td>
+                    <td>${akar.why_3}</td>
+                    <td>${akar.why_4}</td>
+                    <td class="table-danger fw-bold text-danger">${akar.why_5}</td>
+                    <td class="text-center">
+                        <input type="checkbox" class="form-check-input chk-akar" style="transform: scale(1.5);" value="${akar.id_akar}">
+                    </td>
+                </tr>
+            `;
+        });
+        html += `</tbody></table></div>`;
+    });
+    
+    document.getElementById('container5Why').innerHTML = html;
+}
+
+// ==========================================
+// SUBMIT 5-WHY & TAMPILKAN FISHBONE
+// ==========================================
+function submitAkarPenyebab() {
+    const checkedBoxes = document.querySelectorAll('.chk-akar:checked');
+    if (checkedBoxes.length === 0) {
+        alert("Pilih minimal 1 akar penyebab yang paling relevan!");
+        return;
+    }
+
+    // Simpan pilihan user, buang duplikasi (jika teks why_5 sama)
+    const akarTerpilih = [];
+    const seenWhy5 = new Set();
+    
+    Array.from(checkedBoxes).forEach(cb => {
+        const akar = appState.akarPenyebabMentah.find(a => a.id_akar === cb.value);
+        if(!seenWhy5.has(akar.why_5.toLowerCase())) {
+            seenWhy5.add(akar.why_5.toLowerCase());
+            akarTerpilih.push(akar);
+        }
+    });
+
+    appState.akarTerpilih = akarTerpilih;
+
+    // Render Visualisasi Pseudo-Fishbone
+    let fishboneHtml = '<ul class="list-group">';
+    akarTerpilih.forEach(akar => {
+        // Duri paling kecil (Why 5) ditandai khusus
+        fishboneHtml += `
+            <li class="list-group-item">
+                <span class="badge bg-secondary">${akar.kategori_fishbone}</span> 
+                ➔ ${akar.why_1} ➔ ... ➔ 
+                <span class="badge bg-danger fs-6">${akar.why_5}</span>
+            </li>`;
+    });
+    fishboneHtml += '</ul>';
+    
+    document.getElementById('containerFishbone').innerHTML = fishboneHtml;
+
+    // Pindah Modal
+    bootstrap.Modal.getInstance(document.getElementById('modalStep6A')).hide();
+    const modalStep6B = new bootstrap.Modal(document.getElementById('modalStep6B'));
+    modalStep6B.show();
+}
+
+// ==========================================
+// LOGIKA NGT (Nominal Group Technique)
+// ==========================================
+function toggleNGTForm() {
+    const opsi = document.getElementById('opsiPakaiNGT').value;
+    document.getElementById('formNGTSetup').style.display = (opsi === 'ya') ? 'block' : 'none';
+}
+
+function prosesKeputusanNGT() {
+    const pakaiNGT = document.getElementById('opsiPakaiNGT').value;
+    
+    bootstrap.Modal.getInstance(document.getElementById('modalStep6B')).hide();
+
+    if (pakaiNGT === 'tidak') {
+        appState.akarPrioritasFinal = appState.akarTerpilih;
+        alert("Lanjut ke Step 7: Alternatif Solusi (Tanpa NGT).");
+        // panggil fungsi mulaiStep7() disini nanti
+    } else {
+        appState.configNGT = {
+            voter: parseInt(document.getElementById('jumlahVoter').value),
+            metode: document.getElementById('metodeNGT').value
+        };
+        renderTabelVotingNGT();
+    }
+}
+
+function renderTabelVotingNGT() {
+    // Render Header Voter
+    let headHtml = `<tr><th width="40%">Akar Penyebab (Why 5)</th>`;
+    for(let i = 1; i <= appState.configNGT.voter; i++) {
+        headHtml += `<th>Voter ${i}<br><input type="text" class="form-control form-control-sm" placeholder="Nama..." id="namaVoter${i}"></th>`;
+    }
+    headHtml += `</tr>`;
+    document.getElementById('theadVotingNGT').innerHTML = headHtml;
+
+    // Render Baris Akar Penyebab
+    let bodyHtml = '';
+    appState.akarTerpilih.forEach((akar) => {
+        bodyHtml += `<tr><td class="fw-bold">${akar.why_5}</td>`;
+        for(let i = 1; i <= appState.configNGT.voter; i++) {
+            // Nilai maksimal 10
+            bodyHtml += `<td><input type="number" min="1" max="10" class="form-control vote-input" data-akar="${akar.id_akar}" data-voter="${i}"></td>`;
+        }
+        bodyHtml += `</tr>`;
+    });
+    document.getElementById('tbodyVotingNGT').innerHTML = bodyHtml;
+
+    const modalStep6C = new bootstrap.Modal(document.getElementById('modalStep6C'));
+    modalStep6C.show();
+}
+
+async function kalkulasiVotingNGT() {
+    // 1. Hitung total skor voting secara matematis di JavaScript (Lebih akurat dari AI)
+    appState.akarTerpilih.forEach(akar => {
+        let totalVote = 0;
+        for(let i = 1; i <= appState.configNGT.voter; i++) {
+            const val = document.querySelector(`.vote-input[data-akar="${akar.id_akar}"][data-voter="${i}"]`).value;
+            totalVote += val ? parseInt(val) : 0;
+        }
+        akar.total_vote = totalVote;
+    });
+
+    // Urutkan dari skor tertinggi
+    appState.akarTerpilih.sort((a, b) => b.total_vote - a.total_vote);
+
+    // 2. Terapkan Filter Metode NGT
+    const jumlahAkar = appState.akarTerpilih.length;
+    const metode = appState.configNGT.metode;
+    let jumlahDiambil = jumlahAkar; // Default ambil semua
+
+    if (metode === 'setengah_n') jumlahDiambil = Math.ceil(jumlahAkar / 2);
+    else if (metode === 'setengah_n_plus_1') jumlahDiambil = Math.ceil(jumlahAkar / 2) + 1;
+    else if (metode === 'top_20') Math.max(1, Math.ceil(jumlahAkar * 0.20));
+    else if (metode === 'top_10') Math.max(1, Math.ceil(jumlahAkar * 0.10));
+    else if (metode === 'top_1') jumlahDiambil = 1;
+
+    appState.akarPrioritasFinal = appState.akarTerpilih.slice(0, jumlahDiambil);
+
+    // 3. (Opsional) Kirim ke AI untuk membuat narasi kesimpulan NGT
+    showLoading(true);
+    const promptSystem = `Anda adalah Ahli Fasilitator NGT. 
+Berikut adalah hasil voting NGT untuk akar penyebab masalah. Akar penyebab yang terpilih (berdasarkan pemotongan metode) adalah:
+${JSON.stringify(appState.akarPrioritasFinal.map(a => a.why_5 + " (Skor: " + a.total_vote + ")"))}
+Buatkan narasi kesimpulan singkat 2 paragraf. 
+Keluaran HARUS JSON: { "kesimpulan_ngt": "Teks narasi..." }`;
+
+    try {
+        const response = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ role: "user", parts: [{ text: promptSystem }] }],
+                generationConfig: { responseMimeType: "application/json" }
+            })
+        });
+        
+        const data = await response.json();
+        const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+        appState.narasiNGT = parsed.kesimpulan_ngt;
+
+        bootstrap.Modal.getInstance(document.getElementById('modalStep6C')).hide();
+        alert("Voting Selesai!\n" + appState.narasiNGT + "\n\nLanjut ke Step 7: Alternatif Solusi.");
+        // panggil fungsi mulaiStep7() disini nanti
+
+    } catch (error) {
+        alert("Gagal memproses AI narasi NGT, namun kalkulasi berhasil.");
+    } finally {
+        showLoading(false);
+    }
+}
