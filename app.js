@@ -25,7 +25,7 @@ function bacaFileLaporan(event, targetTextareaId) {
 }
 
 // GANTI DENGAN URL WORKER ANDA
-const WORKER_URL = "https://puskesmas-gemini-proxy.sip-puskesmas-jambesari.workers.dev/";
+const WORKER_URL = 'https://puskesmas-gemini-proxy.sip-puskesmas-jambesari.workers.dev';
 
 // GANTI DENGAN URL RAW FILE REGULASI DI GITHUB ANDA 
 const REGULASI_URLS = [
