@@ -142,6 +142,115 @@
                 </div>
             </div>
         </div>
+
+        <!-- ==============================================
+             MODAL STEP 6A: TABEL 5 WHY & SELEKSI AKAR PENYEBAB
+             ============================================== -->
+        <div class="modal fade" id="modalStep6A" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-fullscreen">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Step 6: Analisis Akar Penyebab (Fishbone & 5-Why)</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-warning">
+                            <strong>Instruksi:</strong> AI telah membedah masalah prioritas Anda. Pilih (centang) akar penyebab yang paling relevan dengan kondisi riil di lapangan.
+                        </div>
+                        <div id="container5Why">
+                            <!-- Tabel 5 Why akan di-render di sini oleh JS -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="submitAkarPenyebab()">Submit Pilihan & Lihat Tulang Ikan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==============================================
+             MODAL STEP 6B: DIAGRAM FISHBONE & OPSI NGT
+             ============================================== -->
+        <div class="modal fade" id="modalStep6B" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title">Diagram Akar Penyebab & Keputusan NGT</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h5>Struktur Akar Penyebab Terpilih</h5>
+                        <!-- Representasi Visual Fishbone -->
+                        <div id="containerFishbone" class="p-3 bg-light border rounded mb-4" style="max-height: 400px; overflow-y: auto;">
+                            <!-- Diisi oleh JS -->
+                        </div>
+
+                        <hr>
+                        <h5>Nominal Group Technique (NGT)</h5>
+                        <p>Apakah Anda ingin melakukan voting NGT untuk mengerucutkan akar penyebab ini sebelum mencari solusi?</p>
+                        
+                        <div class="row">
+                            <div class="col-md-3">
+                                <select class="form-select" id="opsiPakaiNGT" onchange="toggleNGTForm()">
+                                    <option value="tidak">Tidak, Langsung ke Solusi</option>
+                                    <option value="ya">Ya, Gunakan NGT</option>
+                                </select>
+                            </div>
+                            <div class="col-md-9" id="formNGTSetup" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label>Jumlah Voter</label>
+                                        <input type="number" id="jumlahVoter" class="form-control" min="2" max="20" value="3">
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label>Metode Penetapan Prioritas</label>
+                                        <select class="form-select" id="metodeNGT">
+                                            <option value="setengah_n">1/2 N (Setengah dari total akar penyebab)</option>
+                                            <option value="setengah_n_plus_1">1/2 N + 1</option>
+                                            <option value="top_20">Top 20%</option>
+                                            <option value="top_10">Top 10%</option>
+                                            <option value="top_1">Hanya 1 Tertinggi (Top 1)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" onclick="prosesKeputusanNGT()">Lanjutkan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==============================================
+             MODAL STEP 6C: VOTING NGT
+             ============================================== -->
+        <div class="modal fade" id="modalStep6C" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-dark">
+                        <h5 class="modal-title">Voting NGT (Skala 1 - 10)</h5>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm align-middle">
+                                <thead class="table-light" id="theadVotingNGT">
+                                    <!-- Diisi otomatis -->
+                                </thead>
+                                <tbody id="tbodyVotingNGT">
+                                    <!-- Diisi otomatis -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="kalkulasiVotingNGT()">Hitung Hasil NGT (Lanjut Step 7)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
