@@ -31,13 +31,14 @@ function showLoading(show) {
 // ==========================================
 async function fetchRegulasi() {
     try {
-        const response = await fetch(REGULASI_URL);
-        if(response.ok) {
-            appState.acuanRegulasi = await response.text();
-            console.log("Acuan regulasi berhasil dimuat.");
-        }
+        // Memanggil SEMUA link di dalam array secara bersamaan
+        const responses = await Promise.all(REGULASI_URLS.map(url => fetch(url)));
+        const texts = await Promise.all(responses.map(res => res.text()));
+    
+        // Menggabungkan semua isi file menjadi satu teks panjang untuk dibaca AI
+        teksRegulasi = texts.join("\n\n=== BATAS DOKUMEN REGULASI ===\n\n");
     } catch (e) {
-        console.log("Gagal memuat regulasi, menggunakan pengetahuan bawaan AI.");
+        console.warn("Gagal memuat beberapa file regulasi:", e);
     }
 }
 // Panggil saat aplikasi pertama kali dimuat
