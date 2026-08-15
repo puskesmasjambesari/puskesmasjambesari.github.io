@@ -64,7 +64,84 @@
             <button class="btn btn-success mt-3" onclick="lanjutStep4()">Pilih Masalah & Hitung USG Akhir</button>
             <button class="btn btn-warning mt-3 ms-2" onclick="reAnalisis('step2')">Re-Analisis (Hasil Kurang Tepat)</button>
         </div>
+        <!-- ==============================================
+             MODAL STEP 4: INPUT SKOR USG
+             ============================================== -->
+        <div class="modal fade" id="modalStep4" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">Step 4: Penilaian USG (Urgency, Seriousness, Growth)</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <strong>Panduan Skala 1 - 5:</strong><br>
+                            <span class="badge bg-secondary">1</span> Sangat Rendah | 
+                            <span class="badge bg-secondary">2</span> Rendah | 
+                            <span class="badge bg-secondary">3</span> Cukup | 
+                            <span class="badge bg-secondary">4</span> Tinggi | 
+                            <span class="badge bg-danger">5</span> Sangat Tinggi
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Masalah Terpilih</th>
+                                        <th width="12%">Urgency (U)</th>
+                                        <th width="12%">Seriousness (S)</th>
+                                        <th width="12%">Growth (G)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelInputUSG">
+                                    <!-- Diisi otomatis oleh JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" onclick="hitungUSG()">Kalkulasi & Analisis AI (Lanjut Step 5)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <!-- ==============================================
+             MODAL STEP 5: HASIL AKHIR USG & PILIH TOP 3
+             ============================================== -->
+        <div class="modal fade" id="modalStep5" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">Step 5: Finalisasi Prioritas Masalah</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted">Pilih maksimal <strong>3 masalah prioritas utama</strong> berdasarkan total skor tertinggi dan analisis AI untuk dilanjutkan ke Analisis Akar Penyebab.</p>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Peringkat</th>
+                                        <th>Masalah</th>
+                                        <th>Skor (U×S×G)</th>
+                                        <th>Analisis Prioritas (oleh AI)</th>
+                                        <th>Pilih Top 3</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelFinalUSG">
+                                    <!-- Diisi otomatis oleh JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-warning" onclick="reAnalisis('step4')">Kembali ke Input USG</button>
+                        <button type="button" class="btn btn-primary" onclick="finalisasiUSG()">Simpan & Lanjut ke Fishbone (Step 6)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
