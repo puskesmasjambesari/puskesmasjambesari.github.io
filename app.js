@@ -4,9 +4,9 @@ const WORKER_URL = "https://gemini-proxy.sip-puskesmas-jambesari.workers.dev";
 // GANTI DENGAN URL RAW FILE REGULASI DI GITHUB ANDA 
 const REGULASI_URLS = [
     "regulasi/KMK Nomor 2015 Tahun 2023 tentang Petunjuk Teknis Integrasi Pelayanan Kesehatan Primer.txt",
-    "Pedoman Teknis Pencegahan dan Pengendalian Infeksi di Fasilitas Pelayanan Kesehatan Tingkat Pertama",
-    "Permenkes No 11 Tahun 2017 Tentang Keselamatan Pasien",
-    "permenkes-no-19-tahun-2024"
+    "regulasi/Pedoman Teknis Pencegahan dan Pengendalian Infeksi di Fasilitas Pelayanan Kesehatan Tingkat Pertama",
+    "regulasi/Permenkes No 11 Tahun 2017 Tentang Keselamatan Pasien",
+    "regulasi/permenkes-no-19-tahun-2024"
     // Tambahkan URL lain di sini, pisahkan dengan koma
 ];
 
