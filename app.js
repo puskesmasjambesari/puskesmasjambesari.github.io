@@ -27,7 +27,7 @@ function bacaFileLaporan(event, targetTextareaId) {
 // GANTI DENGAN URL WORKER ANDA
 const WORKER_URL = "https://puskesmas-gemini-proxy.sip-puskesmas-jambesari.workers.dev"; 
 
-// GANTI DENGAN URL RAW FILE REGULASI DI GITHUB ANDA
+// GANTI DENGAN URL RAW FILE REGULASI DI GITHUB ANDA 
 const REGULASI_URLS = [
     "regulasi/KMK Nomor 2015 Tahun 2023 tentang Petunjuk Teknis Integrasi Pelayanan Kesehatan Primer.txt",
     "regulasi/Pedoman Teknis Pencegahan dan Pengendalian Infeksi di Fasilitas Pelayanan Kesehatan Tingkat Pertama.txt",
