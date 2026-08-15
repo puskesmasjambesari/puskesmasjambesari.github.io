@@ -1,3 +1,29 @@
+// ==========================================
+// FITUR UNGGAH FILE LAPORAN (TXT/CSV)
+// ==========================================
+function bacaFileLaporan(event, targetTextareaId) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    
+    // Tampilkan indikator loading ringan jika perlu
+    document.getElementById(targetTextareaId).value = "Sedang membaca file...";
+
+    reader.onload = function(e) {
+        // Masukkan isi teks dari file langsung ke dalam textarea
+        document.getElementById(targetTextareaId).value = e.target.result;
+    };
+
+    reader.onerror = function() {
+        alert("Gagal membaca file. Pastikan formatnya adalah teks (.txt atau .csv).");
+        document.getElementById(targetTextareaId).value = "";
+    };
+
+    // Membaca file sebagai string/teks
+    reader.readAsText(file);
+}
+
 // GANTI DENGAN URL WORKER ANDA
 const WORKER_URL = "https://gemini-proxy.sip-puskesmas-jambesari.workers.dev"; 
 
@@ -102,6 +128,15 @@ Struktur JSON yang diharapkan:
 
         const data = await response.json();
         
+        // --- TAMBAHAN KODE VALIDASI DI SINI ---
+        if (!data.candidates || data.candidates.length === 0) {
+            console.error("Respons API Error:", data);
+            alert("Gagal memproses data. API tidak mengembalikan jawaban. Silakan periksa Worker URL atau API Key Anda di Cloudflare.");
+            showLoading(false);
+            return;
+        }
+        // -------------------------------------
+        
         // Mengambil teks jawaban dari respon Gemini
         const rawText = data.candidates[0].content.parts[0].text;
         
@@ -120,8 +155,8 @@ Struktur JSON yang diharapkan:
         document.getElementById('step3').classList.add('step-active');
 
     } catch (error) {
-        alert("Terjadi kesalahan saat menganalisis: " + error.message);
-        console.error(error);
+        alert("Terjadi kesalahan saat menganalisis: JSON tidak valid atau koneksi terputus. Cek console log.");
+        console.error("Detail Error:", error);
     } finally {
         showLoading(false);
     }
