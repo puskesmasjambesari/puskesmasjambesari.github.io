@@ -250,6 +250,73 @@
                 </div>
             </div>
         </div>
+
+        <!-- ==============================================
+             MODAL STEP 7: ALTERNATIF SOLUSI
+             ============================================== -->
+        <div class="modal fade" id="modalStep7" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">Step 7: Perumusan & Seleksi Alternatif Solusi</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <strong>Instruksi:</strong> AI telah merumuskan beberapa alternatif solusi untuk setiap akar masalah (berdasarkan regulasi & inovasi Puskesmas). Centang solusi yang ingin diambil.
+                        </div>
+                        <div id="containerStep7">
+                            <!-- Tabel Alternatif Solusi di-render JS -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-warning" onclick="reAnalisis('step7')">Re-Analisis Solusi</button>
+                        <button type="button" class="btn btn-success" onclick="submitStep7()">Simpan Solusi & Buat Planning (Step 8)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==============================================
+             MODAL STEP 8: PLANNING 4W + 1H & REVISI REKOMENDASI
+             ============================================== -->
+        <div class="modal fade" id="modalStep8" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-fullscreen">
+                <div class="modal-content">
+                    <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title">Step 8: Penyusunan Rencana Aksi (4W1H) & Rekomendasi User</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-warning">
+                            <strong>Instruksi:</strong> Centang rencana aksi yang disetujui, sesuaikan kolom <em>When</em> dan <em>Who</em>, serta berikan rekomendasi/catatan tambahan pada kolom paling kanan jika ada.
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover align-middle">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th width="4%">Pilih</th>
+                                        <th width="15%">Solusi / Kegiatan (What)</th>
+                                        <th width="15%">Tujuan & Alasan (Why)</th>
+                                        <th width="12%">Lokasi (Where)</th>
+                                        <th width="14%">Waktu / Durasi (When)</th>
+                                        <th width="14%">Penanggung Jawab (Who)</th>
+                                        <th width="14%">Metode Pelaksanaan (How)</th>
+                                        <th width="12%">Rekomendasi / Catatan User</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyStep8">
+                                    <!-- Diisi oleh JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="submitRevisiStep8()">Proses Revisi AI & Simpan Planning (Lanjut Step 9)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         
     </div>
 
