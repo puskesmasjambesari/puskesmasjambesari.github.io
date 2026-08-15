@@ -39,16 +39,20 @@
              ============================================== -->
         <div id="step1" class="step-container step-active card shadow-sm p-4">
             <h4>Step 1: Input Data Dasar & Capaian Kinerja</h4>
-            <p class="text-muted">Masukkan ringkasan data atau tempel (paste) laporan kinerja ke dalam kotak di bawah ini.</p>
+            <p class="text-muted">Masukkan ringkasan data, tempel (paste), atau unggah file laporan (.txt atau .csv).</p>
             
             <form id="formStep1">
                 <div class="mb-3">
                     <label class="form-label fw-bold">Data Demografi, SDM, Sarpras, & Anggaran</label>
-                    <textarea class="form-control" id="inputDasar" rows="4" placeholder="Misal: Puskesmas memiliki 2 dokter, anggaran BOK Rp 500jt..."></textarea>
+                    <!-- Tombol Upload Data Dasar -->
+                    <input type="file" class="form-control form-control-sm mb-2" accept=".txt,.csv" onchange="bacaFileLaporan(event, 'inputDasar')">
+                    <textarea class="form-control" id="inputDasar" rows="4" placeholder="Misal: Puskesmas memiliki 2 dokter..."></textarea>
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">Capaian Kinerja (PKP, Mutu, SPM, Kepuasan Pelanggan)</label>
-                    <textarea class="form-control" id="inputKinerja" rows="6" placeholder="Misal: Cakupan Imunisasi Dasar 60% (Target 90%). Komplain pelanggan lambatnya pendaftaran..."></textarea>
+                    <!-- Tombol Upload Data Kinerja -->
+                    <input type="file" class="form-control form-control-sm mb-2" accept=".txt,.csv" onchange="bacaFileLaporan(event, 'inputKinerja')">
+                    <textarea class="form-control" id="inputKinerja" rows="6" placeholder="Misal: Cakupan Imunisasi Dasar 60%..."></textarea>
                 </div>
                 <button type="button" class="btn btn-primary" onclick="prosesStep2()">Proses & Analisis Masalah (Lanjut Step 2)</button>
             </form>
