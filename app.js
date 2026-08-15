@@ -2,8 +2,12 @@
 const WORKER_URL = "https://gemini-proxy.sip-puskesmas-jambesari.workers.dev"; 
 
 // GANTI DENGAN URL RAW FILE REGULASI DI GITHUB ANDA 
-// (Bisa dikosongkan/di-comment sementara jika file belum ada di github)
-const REGULASI_URL = "https://raw.githubusercontent.com/username/repo/main/docs/regulasi_puskesmas.txt";
+const REGULASI_URLS = [
+    "https://raw.githubusercontent.com/username/repo/main/docs/regulasi_puskesmas.txt",
+    "https://raw.githubusercontent.com/username/repo/main/docs/pedoman_mutu.txt",
+    "https://raw.githubusercontent.com/username/repo/main/docs/standar_kemenkes.txt"
+    // Tambahkan URL lain di sini, pisahkan dengan koma
+];
 
 // Ini adalah "otak/memori" aplikasi. Semua data akan disimpan di objek ini
 // Objek inilah yang nantinya bisa di download/upload oleh user
