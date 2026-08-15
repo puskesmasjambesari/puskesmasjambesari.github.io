@@ -352,6 +352,7 @@ function finalisasiUSG() {
     
     alert("Berhasil! Masalah prioritas telah ditetapkan. Data siap untuk dianalisis menggunakan Diagram Tulang Ikan (Fishbone).");
     // Nanti akan memanggil fungsi tampilStep6() di sini
+    mulaiStep6()
 }
 
 // ==========================================
